@@ -12,7 +12,7 @@
         android:background="@drawable/round_shape_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="STAMP"
+        android:text="SCAN QR CODE"
         android:id="@+id/scan_button"
         android:padding="24dp"
         android:typeface="monospace"
