@@ -65,8 +65,21 @@ class MultiSigUtils {
             }
             sigs.add(signature.encodeToBitcoin());
 
-            for (byte[] sign : sigs)
-                builder.data(sign);
+            // Collect the public keys, we need to know the order to add signatures
+            // in the same order.
+            List<byte[]> pubkeys = Lists.newArrayList();
+            for(int i = 1; i < redeemScript.getChunks().size() - 2; i++) {
+                pubkeys.add(redeemScript.getChunks().get(i).data);
+            }
+
+            // Re-insert sigs in the correct order.
+            for(byte[] pubk : pubkeys) {
+                for (byte[] sign : sigs) {
+                    if(ECKey.verify(hash.getBytes(), sign, pubk)) {
+                        builder.data(sign);
+                    }
+                }
+            }
             builder.data(redeemScript.getProgram());
 
             txin.setScriptSig(builder.build());
