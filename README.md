@@ -42,6 +42,13 @@ to send the signed TX back to your service.
 
 Simply take the command above and create a QR code for the onchain.io app to scan.
 
+### Setting the wallet seed.
+
+The first time it's run the onchain app will generate a BIP32 wallet seed. To backup the seed click on the menu and 
+select "Show BIP39 Seed"
+
+To set a seed generate a QR code containing a 24 word BIP39 compatible passphrase. Scan the passphrase in with the onchain app.
+
 
 ### How do I build this ?
 
