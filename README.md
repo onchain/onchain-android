@@ -21,6 +21,14 @@ e.g.
 
     mpk|mywallet.com|hxxp://mywallet.com/external_mpk|user|980190962
 
+#### Get a Public Key
+
+    pubkey|service-name|Callback URL (POST)|Pipe seperated paramers you supply
+
+e.g.
+
+    pubkey|mywallet.com|hxxp://mywallet.com/public_key|user|980190963
+
 #### To Sign a TX
 
     sign|service-name|Callback URL (GET and POST) to get the TX|Pipe seperated paramers you supply
