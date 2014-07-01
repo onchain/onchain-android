@@ -1,5 +1,7 @@
 package stamp.app;
 
+import android.util.Log;
+
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.ECKey;
@@ -32,6 +34,7 @@ import java.util.ListIterator;
 class MultiSigUtils {
 
     public static Transaction signMultiSig(Transaction tx, ECKey key) throws AddressFormatException {
+
 
         for(int index = 0; index < tx.getInputs().size(); index++) {
 
@@ -77,6 +80,7 @@ class MultiSigUtils {
                 for (byte[] sign : sigs) {
                     if(ECKey.verify(hash.getBytes(), sign, pubk)) {
                         builder.data(sign);
+                        break;
                     }
                 }
             }

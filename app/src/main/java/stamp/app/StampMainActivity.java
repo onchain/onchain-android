@@ -149,6 +149,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 // Sign a TX.
                 processSignRequest(params, post_back);
+            } else if(cmd.equals("pubkey")) {
+
+                // Sign a TX.
+                processPubKeyRequest(params, post_back);
             }
         }
         catch(Exception e) {
@@ -231,6 +235,45 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         return HDKeyDerivation.createMasterPrivateKey(rnd);
     }
 
+    private void processPubKeyRequest(String[] params, String post_back) throws Exception {
+
+        DeterministicKey ekprv = getHDWalletDeterministicKey();
+
+        Toast toast = Toast.makeText(getApplicationContext(),
+                bytesToHex(ekprv.getPubKeyBytes()), Toast.LENGTH_SHORT);
+        toast.show();
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        RequestParams rp = new RequestParams();
+        rp.put("pubkey", bytesToHex(ekprv.getPubKeyBytes()));
+
+
+        for(int i = 3; (i + 1) < params.length; i+= 2) {
+            rp.put(params[i], params[i + 1]);
+        }
+
+
+        Log.w("INFO", rp.toString());
+
+        client.post(post_back, rp, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(String response) {
+
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        response, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers,
+                                  byte[] responseBody, Throwable error) {
+
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        "" + statusCode, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        });
+    }
+
     private void processMPKRequest(String[] params, String post_back) throws Exception {
 
         DeterministicKey ekprv = getHDWalletDeterministicKey();
@@ -258,6 +301,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Toast toast = Toast.makeText(getApplicationContext(),
                         response, Toast.LENGTH_SHORT);
                 toast.show();
+                Log.w("INFO", "SUCCESS " + response);
             }
             @Override
             public void onFailure(int statusCode, Header[] headers,
@@ -266,7 +310,20 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
                 toast.show();
+
+                Log.w("INFO", "FAILURE " + statusCode);
             }
         });
+    }
+
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
     }
 }
