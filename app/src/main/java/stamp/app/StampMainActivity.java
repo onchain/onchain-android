@@ -181,10 +181,24 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         client.get(post_back, rp, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(String response) {
+
+                Log.w("INFO", response);
+
                 Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(response));
 
+                if(tx.getOutputs().size() == 0) {
+
+                    String txShort = response.substring(0, 40);
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "Invalid TX ? (" + txShort + ")", Toast.LENGTH_SHORT);
+                    toast.show();
+                    return;
+                }
+
                 try {
+
                     tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
+
                     rp.put("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
 
                     // POST it back.
@@ -196,6 +210,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                             Toast toast = Toast.makeText(getApplicationContext(),
                                     response, Toast.LENGTH_SHORT);
                             toast.show();
+
+
+                            Log.w("INFO", "SUCCESS " + response);
                         }
                         @Override
                         public void onFailure(int statusCode, Header[] headers,
@@ -204,11 +221,16 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                             Toast toast = Toast.makeText(getApplicationContext(),
                                     "" + statusCode, Toast.LENGTH_SHORT);
                             toast.show();
+
+
+                            Log.w("INFO", "FAILURE " + statusCode);
                         }
                     });
 
                 } catch (Exception e) {
                     // TODO figure out what to do with it.
+                    Log.w("ERROR", e.getMessage());
+                    return;
                 }
 
                 Toast toast = Toast.makeText(getApplicationContext(),

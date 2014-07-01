@@ -1,20 +1,13 @@
-## Welcome to Stamp a mobile app for signing multi sig transactions from a QR code.
+## Welcome to the onchain.io mobile app for signing multi sig transactions from a QR code.
 
 ### Potential Uses
 
-* Online Wallets. Stamp can be used as a safer form of 2 factor authentication.
+* Online Wallets. The onchain.io app can be used as a safer form of 2 factor authentication.
 * Online Market Places. A new wave of cryptocurrency marketplaces using multi sig transactions need an easy way for the user to sign the transaction.
 
 ### How ?
 
-Basically Stamp is a Hierarchcal deterministic Bitcoin wallet that doesn't store any Bitcoins. Rather it can issue Master Public Keys and sign P2SH transactions created with those keys.
-
-### Plan
-
-1. Send a MPK after reading a QR code. IN PROGRESS.
-2. Sign a TX generated from a P2SH using the above key. IN PROGRESS
-3. Fix up GUI and look and feel.
-4. Test on iOS
+Basically the onchain.io is a Hierarchcal deterministic Bitcoin wallet that doesn't store any Bitcoins. Rather it can issue Master Public Keys and sign P2SH transactions created with those keys.
 
 ### Proposed API
 
@@ -30,13 +23,16 @@ e.g.
 
 #### To Sign a TX
 
-    sign|service-name|Callback URL (GET) to get the TX|Callback URL (POST) to send the signed TX|Pipe seperated paramers you supply
+    sign|service-name|Callback URL (GET and POST) to get the TX|Pipe seperated paramers you supply
 
 e.g.
 
-    sign|mywallet.com|hxxp://mywallet.com/get_tx|hxxp://mywallet.com/get_tx|user|980190962
+    sign|mywallet.com|hxxp://mywallet.com/sign_tx|user|980190962
+    
+For TX signing, your call back URL will be called twice. Once with a GET operation to get the existing TX. Seconds with a POST operation
+to send the signed TX back to your service.
 
-Simply take the Stamp command above and create a QR code for stamp to scan.
+Simply take the command above and create a QR code for the onchain.io app to scan.
 
 
 ### How do I build this ?
