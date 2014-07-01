@@ -11,7 +11,7 @@ Basically the onchain.io is a Hierarchcal deterministic Bitcoin wallet that does
 
 ### Proposed API
 
-Below are some example Stamp commands.
+Below are some example commands.
 
 #### Get a Master Public Key
 
