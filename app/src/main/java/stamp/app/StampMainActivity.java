@@ -1,5 +1,7 @@
 package stamp.app;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceActivity;
@@ -82,6 +84,12 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         return walletSeed;
     }
 
+    private void setWalletSeed(String seed) {
+        SharedPreferences.Editor e = getSharedPreferences("bip39", MODE_PRIVATE).edit();
+        e.putString("wallet-seed", seed.toString().trim());
+        e.commit();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -97,7 +105,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_showseed) {
+            new AlertDialog.Builder(this).setTitle(R.string.action_showseed)
+                .setMessage(getWalletSeed()).setNeutralButton("Close", null).show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -131,8 +141,13 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         try {
 
             String[] params = data.split("\\|");
-            if(params.length < 3)
+            if(params.length < 3) {
+                // It's not a command, perhaps it's BIP39 seed.
+                params = data.split(" ");
+                if(params.length == 24)
+                    processNewWalletSeed(data);
                 return;
+            }
 
 
             String cmd = params[0];
@@ -161,6 +176,31 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                     e.toString(), Toast.LENGTH_SHORT);
             toast.show();
         }
+    }
+
+    private void processNewWalletSeed(final String data) {
+
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        setWalletSeed(data);
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(data).setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener)
+                .setTitle("Do you want to change your BIP39 seed ?").show();
+
     }
 
     private void processSignRequest(final String[] params, final String post_back)
