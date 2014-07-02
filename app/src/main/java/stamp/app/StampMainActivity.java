@@ -270,6 +270,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 } catch (Exception e) {
                     // TODO figure out what to do with it.
                     Log.w("ERROR", e.getMessage());
+
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            e.getMessage(), Toast.LENGTH_SHORT);
+                    toast.show();
                     return;
                 }
 
