@@ -376,6 +376,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
                 toast.show();
+                Log.w("ERROR", "" + bytesToHex(responseBody));
 
                 Log.w("INFO", "FAILURE " + statusCode);
             }
