@@ -19,6 +19,7 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.crypto.DeterministicHierarchy;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.bitcoin.crypto.MnemonicCode;
@@ -151,23 +152,25 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
 
             String cmd = params[0];
-            //String service = params[1];
+            String service = params[1];
             String post_back = params[2];
+
+            int crc = crc16(service);
 
             Log.w("INFO", post_back);
 
             if(cmd.equals("mpk")) {
 
-                processMPKRequest(params, post_back);
+                processMPKRequest(params, post_back, crc);
 
             } else if(cmd.equals("sign")) {
 
                 // Sign a TX.
-                processSignRequest(params, post_back);
+                processSignRequest(params, post_back, crc);
             } else if(cmd.equals("pubkey")) {
 
                 // Sign a TX.
-                processPubKeyRequest(params, post_back);
+                processPubKeyRequest(params, post_back, crc);
             }
         }
         catch(Exception e) {
@@ -203,10 +206,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
     }
 
-    private void processSignRequest(final String[] params, final String post_back)
+    private void processSignRequest(final String[] params, final String post_back, int index)
         throws Exception {
 
-        final DeterministicKey ekprv = getHDWalletDeterministicKey();
+        final DeterministicKey ekprv = getHDWalletDeterministicKey(index);
 
         final AsyncHttpClient client = new AsyncHttpClient();
         final RequestParams rp = new RequestParams();
@@ -268,7 +271,6 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                     });
 
                 } catch (Exception e) {
-                    // TODO figure out what to do with it.
                     Log.w("ERROR", e.getMessage());
 
                     Toast toast = Toast.makeText(getApplicationContext(),
@@ -293,17 +295,20 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         });
     }
 
-    private DeterministicKey getHDWalletDeterministicKey() throws Exception {
+    private DeterministicKey getHDWalletDeterministicKey(int index) throws Exception {
         String[] seed = getWalletSeed().split(" ");
         MnemonicCode mc = new MnemonicCode();
         byte[] rnd = mc.toEntropy(Arrays.asList(seed));
 
-        return HDKeyDerivation.createMasterPrivateKey(rnd);
+        DeterministicKey dk = HDKeyDerivation.createMasterPrivateKey(rnd);
+
+        return HDKeyDerivation.deriveChildKey(dk, index);
     }
 
-    private void processPubKeyRequest(String[] params, String post_back) throws Exception {
+    private void processPubKeyRequest(String[] params, String post_back, int index)
+            throws Exception {
 
-        DeterministicKey ekprv = getHDWalletDeterministicKey();
+        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
 
         Toast toast = Toast.makeText(getApplicationContext(),
                 bytesToHex(ekprv.getPubKeyBytes()), Toast.LENGTH_SHORT);
@@ -340,9 +345,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         });
     }
 
-    private void processMPKRequest(String[] params, String post_back) throws Exception {
+    private void processMPKRequest(String[] params, String post_back, int index) throws Exception {
 
-        DeterministicKey ekprv = getHDWalletDeterministicKey();
+        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
 
         Toast toast = Toast.makeText(getApplicationContext(),
                 ekprv.serializePubB58(), Toast.LENGTH_SHORT);
@@ -392,5 +397,24 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static int crc16(String serviceName) {
+        int crc = 0xFFFF;          // initial value
+        int polynomial = 0x1021;   // 0001 0000 0010 0001  (0, 5, 12)
+
+        byte[] bytes = serviceName.getBytes();
+
+        for (byte b : bytes) {
+            for (int i = 0; i < 8; i++) {
+                boolean bit = ((b   >> (7-i) & 1) == 1);
+                boolean c15 = ((crc >> 15    & 1) == 1);
+                crc <<= 1;
+                if (c15 ^ bit) crc ^= polynomial;
+            }
+        }
+
+        crc &= 0xffff;
+        return crc;
     }
 }
