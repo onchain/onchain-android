@@ -5,6 +5,8 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_showseed">Show BIP39 Seed</string>
     <string name="title_activity_scan_qrcode">Scan QR Code</string>
+    <string name="onchain">OnChain.IO https://onchain.io</string>
+    <string name="balance">0.00 BTC</string>
     <color name="blue">#38A5CF</color>
 
 </resources>

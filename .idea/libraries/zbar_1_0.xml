@@ -1,8 +1,12 @@
 <component name="libraryTable">
   <library name="zbar-1.0">
     <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/libs/zbar.jar!/" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/libs/x86.jar!/" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/libs/armeabi.jar!/" />
       <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/res" />
       <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/classes.jar!/" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/me.dm7.barcodescanner/zbar/1.0/libs/armeabi-v7a.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
