@@ -1,4 +1,4 @@
-## Welcome to the onchain.io mobile app for signing multi sig transactions from a QR code.
+## The OnChain.IO wallet. A simple user interface hiding a HD wallet with some advanced features.
 
 | Wallet | BIP 39 | BitID |
 |--------|--------|--------|
