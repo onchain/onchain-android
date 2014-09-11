@@ -112,44 +112,4 @@ class MultiSigUtils {
         }
         return pubkeys;
     }
-
-    public static void main(String[] args) throws Exception {
-
-        String walletSeed = "short kiwi mixed tunnel prosper marine mechanic nest fossil tag" +
-                " range north trigger twist hidden enlist sauce tiger wagon " +
-                "cat south bottom virus load";
-
-        String txs = "0100000001ba0e755870b70560e0897b122437057078defda8e5c6f54e460327b23209bced00000000475221026ec043a00dacdd2634624cd99a20317c3994284199ce94e906131884c43d680f2102bd0f91e90aa13938e6ad055f627e4e9a8e319833c605f213447f400aab612dac52aeffffffff01102700000000000017a91426d9fcd0e427b0bf0427f4cfee7a780d663222a28700000000";
-
-        String[] seed = walletSeed.split(" ");
-        MnemonicCode mc = new MnemonicCode();
-        byte[] rnd = mc.toEntropy(Arrays.asList(seed));
-
-        DeterministicKey ekprv = HDKeyDerivation.createMasterPrivateKey(rnd);
-        System.out.println(StampMainActivity.bytesToHex(ekprv.getPubKeyBytes()));
-
-        Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(txs));
-
-        System.out.println(tx);
-
-        tx = signMultiSig(tx, ekprv.toECKey());
-
-        System.out.println(StampMainActivity.bytesToHex(tx.bitcoinSerialize()));
-
-        walletSeed = "power excite town stuff siege birth divert lottery spot atom amateur slice sound test session awkward female cigar type spot sense brave ill trick";
-
-        seed = walletSeed.split(" ");
-        mc = new MnemonicCode();
-        rnd = mc.toEntropy(Arrays.asList(seed));
-
-        ekprv = HDKeyDerivation.createMasterPrivateKey(rnd);
-        System.out.println(StampMainActivity.bytesToHex(ekprv.getPubKeyBytes()));
-
-        tx = signMultiSig(tx, ekprv.toECKey());
-
-        System.out.println(StampMainActivity.bytesToHex(tx.bitcoinSerialize()));
-
-
-        tx = signMultiSig(tx, ekprv.toECKey());
-    }
 }

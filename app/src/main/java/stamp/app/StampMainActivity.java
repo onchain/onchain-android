@@ -141,36 +141,42 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
         try {
 
-            String[] params = data.split("\\|");
-            if(params.length < 3) {
-                // It's not a command, perhaps it's BIP39 seed.
-                params = data.split(" ");
-                if(params.length == 24)
-                    processNewWalletSeed(data);
-                return;
+            // OK let's implement BITID, why not.
+            if(data.toLowerCase().startsWith("bitid")) {
+                BitIDCommands.execute(data, getHDWalletDeterministicKey(0), this);
             }
+            else {
+                String[] params = data.split("\\|");
+                if(params.length < 3) {
+                    // It's not a command, perhaps it's BIP39 seed.
+                    params = data.split(" ");
+                    if(params.length == 24)
+                        processNewWalletSeed(data);
+                    return;
+                }
 
 
-            String cmd = params[0];
-            String service = params[1];
-            String post_back = params[2];
+                String cmd = params[0];
+                String service = params[1];
+                String post_back = params[2];
 
-            int crc = crc16(service);
+                int crc = crc16(service);
 
-            Log.w("INFO", post_back);
+                Log.w("INFO", post_back);
 
-            if(cmd.equals("mpk")) {
+                if(cmd.equals("mpk")) {
 
-                processMPKRequest(params, post_back, crc);
+                    processMPKRequest(params, post_back, crc);
 
-            } else if(cmd.equals("sign")) {
+                } else if(cmd.equals("sign")) {
 
-                // Sign a TX.
-                processSignRequest(params, post_back, crc);
-            } else if(cmd.equals("pubkey")) {
+                    // Sign a TX.
+                    processSignRequest(params, post_back, crc);
+                } else if(cmd.equals("pubkey")) {
 
-                // Sign a TX.
-                processPubKeyRequest(params, post_back, crc);
+                    // Sign a TX.
+                    processPubKeyRequest(params, post_back, crc);
+                }
             }
         }
         catch(Exception e) {
