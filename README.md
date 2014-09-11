@@ -1,5 +1,9 @@
 ## Welcome to the onchain.io mobile app for signing multi sig transactions from a QR code.
 
+| Wallet | BIP 39 | BitID |
+|--------|--------|--------|
+|![](http://i.imgur.com/pGEmL2B.png)|![](http://i.imgur.com/S6frWkp.png)|![](http://i.imgur.com/qRcBoEn.png)|
+
 ### Potential Uses
 
 * Online Wallets. The onchain.io app can be used as a safer form of 2 factor authentication.
