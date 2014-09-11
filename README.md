@@ -4,16 +4,17 @@
 |--------|--------|--------|
 |![](http://i.imgur.com/pGEmL2B.png)|![](http://i.imgur.com/S6frWkp.png)|![](http://i.imgur.com/qRcBoEn.png)|
 
-### Potential Uses
+### Notes
 
-* Online Wallets. The onchain.io app can be used as a safer form of 2 factor authentication.
-* Online Market Places. A new wave of cryptocurrency marketplaces using multi sig transactions need an easy way for the user to sign the transaction.
+* Wallet functionality coming soon. i.e. spend and receive via QR code.
+* The onchain.io app can be used as a safer form of 2 factor authentication. It is used by the https://onchain.io online wallet to split keys across devices.
+* The onchain.io protocol for transaction signing has been implemented in the bitwasp project as a multi sig marketplace.
 
 ### How ?
 
-Basically the onchain.io is a Hierarchcal deterministic Bitcoin wallet that doesn't store any Bitcoins. Rather it can issue Master Public Keys and sign P2SH transactions created with those keys.
+Basically the onchain.io is a Hierarchcal deterministic Bitcoin wallet.It can issue Master Public Keys and sign P2SH transactions created with those keys.
 
-### Proposed API
+### API
 
 Below are some example commands.
 
