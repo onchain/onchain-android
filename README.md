@@ -7,8 +7,9 @@
 ### Notes
 
 * Wallet functionality coming soon. i.e. spend and receive via QR code.
-* The onchain.io app can be used as a safer form of 2 factor authentication. It is used by the https://onchain.io online wallet to split keys across devices.
+* The onchain.io app can be used as a safer form of 2 factor authentication. It is used by the https://www.onchain.io online wallet to split keys across devices.
 * The onchain.io protocol for transaction signing has been implemented in the bitwasp project as a multi sig marketplace.
+* The landing page for the android app is here [Android Bitocin Wallet](http://localhost:3000/android-bitcoin-wallet)
 
 ### How ?
 
