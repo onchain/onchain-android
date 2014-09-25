@@ -1,4 +1,14 @@
-.gradle
-/local.properties
-/.idea/workspace.xml
-.DS_Store
+# Mac OS X clutter
+*.DS_Store
+*.iml
+*.iws
+*.ipr
+.idea/
+.gradle/
+local.properties
+build/
+.gradel/
+*/build/
+
+*~
+*.swp

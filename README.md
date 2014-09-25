@@ -7,8 +7,9 @@
 ### Notes
 
 * Wallet functionality coming soon. i.e. spend and receive via QR code.
-* The onchain.io app can be used as a safer form of 2 factor authentication. It is used by the https://onchain.io online wallet to split keys across devices.
+* The onchain.io app can be used as a safer form of 2 factor authentication. It is used by the https://www.onchain.io online wallet to split keys across devices.
 * The onchain.io protocol for transaction signing has been implemented in the bitwasp project as a multi sig marketplace.
+* The landing page for the android app is here [Android Bitcoin Wallet](https://www.onchain.io/android-bitcoin-wallet)
 
 ### How ?
 
@@ -58,7 +59,6 @@ To set a seed generate a QR code containing a 24 word BIP39 compatible passphras
 ### How do I build this ?
 
 Built with Android Studio.
-
 
 
 
