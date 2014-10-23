@@ -30,6 +30,10 @@ public class MultiSigUtilsTest extends InstrumentationTestCase {
         ArrayList<ECKey> keys = MultiSigUtils.deriveKeysFromPath("m/2", dk);
 
         assertEquals(keys.size(), 1);
+
+        DeterministicKey node = HDKeyDerivation.deriveChildKey(dk, 2);
+
+        assertEquals(node.toECKey().toString(), keys.get(0).toString());
     }
 
     @Override

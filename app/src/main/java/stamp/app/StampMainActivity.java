@@ -291,13 +291,17 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
     }
 
     private DeterministicKey getHDWalletDeterministicKey(int index) throws Exception {
+        DeterministicKey dk = getHDWalletDeterministicKey();
+
+        return HDKeyDerivation.deriveChildKey(dk, index);
+    }
+
+    private DeterministicKey getHDWalletDeterministicKey() throws Exception {
         String[] seed = getWalletSeed().split(" ");
         MnemonicCode mc = new MnemonicCode();
         byte[] rnd = mc.toEntropy(Arrays.asList(seed));
 
-        DeterministicKey dk = HDKeyDerivation.createMasterPrivateKey(rnd);
-
-        return HDKeyDerivation.deriveChildKey(dk, index);
+        return HDKeyDerivation.createMasterPrivateKey(rnd);
     }
 
     private void processPubKeyRequest(String[] params, String post_back, int index)
