@@ -1,38 +1,53 @@
 package stamp.app;
 
-import android.util.Log;
-
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.TransactionInput;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.crypto.DeterministicHierarchy;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.HDKeyDerivation;
-import com.google.bitcoin.crypto.MnemonicCode;
 import com.google.bitcoin.crypto.TransactionSignature;
-import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
 import com.google.bitcoin.script.ScriptOpCodes;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedBytes;
 
-import org.spongycastle.util.encoders.Hex;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 
-class MultiSigUtils {
+public class MultiSigUtils {
+
+    // From a path string get all the derived keys
+    // Path string looks something lile
+    // m/0,m/0/1,....
+    public static ArrayList<ECKey> deriveKeysFromPath(String path, DeterministicKey privateKey) {
+
+        String[] paths = path.split(",");
+
+        ArrayList<ECKey> keys = new ArrayList<ECKey>();
+
+        DeterministicKey key = privateKey;
+        for(String p : paths) {
+            String[] indexes = p.split("/");
+            for(String i : indexes) {
+                if(i.matches("-?\\d+(\\.\\d+)?")) {
+                    int keyIndex = Integer.parseInt(i);
+                    key = HDKeyDerivation.deriveChildKey(key, keyIndex);
+                }
+            }
+            keys.add(key.toECKey());
+        }
+        return keys;
+    }
+
+    public static Transaction signMultiSigFromPath(Transaction tx, DeterministicKey walletKey, String path)
+        throws AddressFormatException {
+
+        ArrayList<ECKey> keys = deriveKeysFromPath(path, walletKey);
+
+        for(ECKey key : keys) {
+            tx = signMultiSig(tx, key);
+        }
+        return tx;
+    }
 
     public static Transaction signMultiSig(Transaction tx, ECKey key) throws AddressFormatException {
 
@@ -106,10 +121,40 @@ class MultiSigUtils {
     }
 
     private static List<byte[]> getPublicKeysFromRedeemScript(Script redeemScript) {
-        List<byte[]> pubkeys = Lists.newArrayList();
+        List<byte[]> publicKeys = Lists.newArrayList();
         for(int i = 1; i < redeemScript.getChunks().size() - 2; i++) {
-            pubkeys.add(redeemScript.getChunks().get(i).data);
+            publicKeys.add(redeemScript.getChunks().get(i).data);
         }
-        return pubkeys;
+        return publicKeys;
+    }
+
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    public static int crc16(String serviceName) {
+        int crc = 0xFFFF;          // initial value
+        int polynomial = 0x1021;   // 0001 0000 0010 0001  (0, 5, 12)
+
+        byte[] bytes = serviceName.getBytes();
+
+        for (byte b : bytes) {
+            for (int i = 0; i < 8; i++) {
+                boolean bit = ((b   >> (7-i) & 1) == 1);
+                boolean c15 = ((crc >> 15    & 1) == 1);
+                crc <<= 1;
+                if (c15 ^ bit) crc ^= polynomial;
+            }
+        }
+
+        crc &= 0xffff;
+        return crc;
     }
 }

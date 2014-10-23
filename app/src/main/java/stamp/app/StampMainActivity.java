@@ -4,37 +4,27 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceActivity;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.crypto.DeterministicHierarchy;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.bitcoin.crypto.MnemonicCode;
-import com.google.bitcoin.crypto.MnemonicException;
 import com.google.bitcoin.params.MainNetParams;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-
 import org.apache.http.Header;
 import org.spongycastle.util.encoders.Hex;
 
-import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -160,7 +150,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 String service = params[1];
                 String post_back = params[2];
 
-                int crc = crc16(service);
+                int crc = MultiSigUtils.crc16(service);
 
                 Log.w("INFO", post_back);
 
@@ -212,10 +202,8 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
     }
 
-    private void processSignRequest(final String[] params, final String post_back, int index)
+    private void processSignRequest(final String[] params, final String post_back, final int index)
         throws Exception {
-
-        final DeterministicKey ekprv = getHDWalletDeterministicKey(index);
 
         final AsyncHttpClient client = new AsyncHttpClient();
         final RequestParams rp = new RequestParams();
@@ -246,6 +234,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 try {
 
+                    DeterministicKey ekprv = getHDWalletDeterministicKey(index);
                     tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
 
                     rp.put("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
@@ -317,12 +306,12 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
         DeterministicKey ekprv = getHDWalletDeterministicKey(index);
 
         Toast toast = Toast.makeText(getApplicationContext(),
-                bytesToHex(ekprv.getPubKeyBytes()), Toast.LENGTH_SHORT);
+                MultiSigUtils.bytesToHex(ekprv.getPubKeyBytes()), Toast.LENGTH_SHORT);
         toast.show();
 
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams rp = new RequestParams();
-        rp.put("pubkey", bytesToHex(ekprv.getPubKeyBytes()));
+        rp.put("pubkey", MultiSigUtils.bytesToHex(ekprv.getPubKeyBytes()));
 
 
         for(int i = 3; (i + 1) < params.length; i+= 2) {
@@ -387,40 +376,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
                 toast.show();
-                Log.w("ERROR", "" + bytesToHex(responseBody));
+                Log.w("ERROR", "" + MultiSigUtils.bytesToHex(responseBody));
 
                 Log.w("INFO", "FAILURE " + statusCode);
             }
         });
-    }
-
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
-    public static int crc16(String serviceName) {
-        int crc = 0xFFFF;          // initial value
-        int polynomial = 0x1021;   // 0001 0000 0010 0001  (0, 5, 12)
-
-        byte[] bytes = serviceName.getBytes();
-
-        for (byte b : bytes) {
-            for (int i = 0; i < 8; i++) {
-                boolean bit = ((b   >> (7-i) & 1) == 1);
-                boolean c15 = ((crc >> 15    & 1) == 1);
-                crc <<= 1;
-                if (c15 ^ bit) crc ^= polynomial;
-            }
-        }
-
-        crc &= 0xffff;
-        return crc;
     }
 }
