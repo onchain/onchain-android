@@ -36,6 +36,17 @@ public class MultiSigUtilsTest extends InstrumentationTestCase {
         assertEquals(node.toECKey().toString(), keys.get(0).toString());
     }
 
+    public void testSignTXByPaths() throws Exception {
+
+        ECKey privateKey = HDKeyDerivation.deriveChildKey(dk, 2).toECKey();
+
+        Transaction txRaw = MultiSigUtils.signMultiSig(multiTX, privateKey);
+
+        Transaction txRaw2 = MultiSigUtils.signMultiSigFromPath(multiTX, dk, "m/2");
+
+        assertEquals(txRaw.getHashAsString(), txRaw2.getHashAsString());
+    }
+
     @Override
     protected void setUp() throws Exception {
 
