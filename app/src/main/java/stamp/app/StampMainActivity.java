@@ -221,7 +221,13 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 Log.w("INFO", response);
 
-                Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(response));
+                String transactionHex = response;
+                String path = null;
+                if(response.indexOf(":") != -1) {
+                    transactionHex = response.split(":")[0];
+                    path = response.split(":")[1];
+                }
+                Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(transactionHex));
 
                 if(tx.getOutputs().size() == 0) {
 
@@ -234,8 +240,13 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 try {
 
-                    DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-                    tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
+                    if(path == null) {
+                        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
+                        tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
+                    } else {
+                        DeterministicKey ekprv = getHDWalletDeterministicKey();
+                        tx = MultiSigUtils.signMultiSigFromPath(tx, ekprv, path);
+                    }
 
                     rp.put("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
 
@@ -264,7 +275,6 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                             Log.w("INFO", "FAILURE " + statusCode);
                         }
                     });
-
                 } catch (Exception e) {
                     Log.w("ERROR", e.getMessage());
 
