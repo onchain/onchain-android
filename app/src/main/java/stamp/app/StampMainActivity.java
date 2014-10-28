@@ -244,7 +244,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                         DeterministicKey ekprv = getHDWalletDeterministicKey(index);
                         tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
                     } else {
-                        DeterministicKey ekprv = getHDWalletDeterministicKey();
+                        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
                         tx = MultiSigUtils.signMultiSigFromPath(tx, ekprv, path);
                     }
 
