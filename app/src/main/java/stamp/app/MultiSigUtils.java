@@ -9,11 +9,50 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.Lists;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MultiSigUtils {
+
+    /**
+     * Parse incoming JSON signature list.
+     * Sign where we can
+     * Rebuild list and send it back
+     */
+    public static String signSignatureList(String signaturesJson, Transaction tx, DeterministicKey key)
+        throws Exception {
+
+        JSONArray sigList = new JSONArray(signaturesJson);
+
+        String pubKeyHex = bytesToHex(key.getPubKeyBytes());
+
+        for(int i = 0; i < sigList.length(); i++) {
+
+            JSONObject keys = sigList.getJSONObject(i);
+
+            JSONArray publicKeys = keys.names();
+
+            for(int x = 0; x < publicKeys.length(); x++) {
+
+                String publicKey = publicKeys.getString(x);
+
+                JSONObject hashAndSig = keys.getJSONObject(publicKey);
+
+                String hash = hashAndSig.getString("hash");
+
+                if(pubKeyHex.toLowerCase().equals(publicKey.toLowerCase())) {
+
+                    byte[] sig = key.toECKey().sign(Sha256Hash.create(Hex.decode(hash))).encodeToDER();
+                    hashAndSig.put("sig", bytesToHex(sig));
+                }
+            }
+        }
+        return sigList.toString();
+    }
 
     // From a path string get all the derived keys
     // Path string looks something lile
