@@ -162,6 +162,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                     // Sign a TX.
                     processSignRequest(params, post_back, crc);
+                } else if(cmd.equals("sign")) {
+
+                    // Sign a TX.
+                    processSignRequest(params, post_back, crc);
                 } else if(cmd.equals("pubkey")) {
 
                     // Sign a TX.
@@ -222,10 +226,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Log.w("INFO", response);
 
                 String transactionHex = response;
-                String path = null;
-                if(response.indexOf(":") != -1) {
+                String metaData = null;
+                if(response.indexOf(":", 0) != -1) {
                     transactionHex = response.split(":")[0];
-                    path = response.split(":")[1];
+                    metaData = response.substring(response.indexOf(":", 0) + 1, response.length());
                 }
                 Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(transactionHex));
 
@@ -240,12 +244,21 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 try {
 
-                    if(path == null) {
+                    if(metaData == null) {
                         DeterministicKey ekprv = getHDWalletDeterministicKey(index);
                         tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
                     } else {
-                        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-                        tx = MultiSigUtils.signMultiSigFromPath(tx, ekprv, path);
+                        // Is this a JSON payload.
+                        if(metaData.startsWith("[")) {
+                            // Yes, use the new JSON format.
+                            DeterministicKey ekprv = getHDWalletDeterministicKey(index);
+                            metaData = MultiSigUtils.signSignatureList(metaData, tx, ekprv.toECKey());
+                            rp.put("meta_data", metaData);
+                        }
+                        else {
+                            DeterministicKey ekprv = getHDWalletDeterministicKey(index);
+                            tx = MultiSigUtils.signMultiSigFromPath(tx, ekprv, metaData);
+                        }
                     }
 
                     rp.put("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));

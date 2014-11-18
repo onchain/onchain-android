@@ -100,10 +100,38 @@ public class MultiSigUtilsTest extends InstrumentationTestCase {
 
         Transaction cwTX = new Transaction(MainNetParams.get(), Hex.decode(sigListTX));
 
-        sigListJson = MultiSigUtils.signSignatureList(sigListJson, cwTX, child);
+        sigListJson = MultiSigUtils.signSignatureList(sigListJson, cwTX, child.toECKey());
 
-        throw new Exception(sigListJson);
+        String tx = "010000000132448fc909b395d7f9e393d830c56b80bb0609d9977be173f1fdff03c515153900000000dd0048304402204b324d61d9fab51dc5d8775b5186c06cb1fc87629c2563315fe0bcaa007c12fb022067775db856f4b08893dc514ccacebc8521d67e2cd0d6be550b040df572a7399e0101493046022100f6309c26186de8fbc020df9e7aee13b90ce1b9f195f7638c36e36b079189c17e022100bd14a491fb4916dee84d73ae1ed867dd3e3fa80f1e2e6dc507d3cfcb90348f1e014c47522102fd89e243d38f4e24237eaac4cd3a6873ce45aa4036ec0c7b79a4d4ac0fefebc42102388085f9b6bbfb1c353b2664cf1857ff6d11c3f93b0635a31204bcbbb9e0403d52aeffffffff02a0860100000000001976a914ef7aeda00f357959ad628405753b41cfb778bde188ac0a5700000000000017a9143b04977278415be296acc65f83084341871ef9f08700000000";
+        Transaction signedTX = new Transaction(MainNetParams.get(), Hex.decode(tx));
 
+        // Run a TX through sign and see if it keeps all the sigs.
+        Transaction afterTX = MultiSigUtils.signMultiSig(signedTX, new ECKey());
+
+        String hex = Utils.bytesToHexString(afterTX.bitcoinSerialize());
+
+        assertEquals(tx, hex);
+    }
+
+    public void testJustFuckingWork() throws Exception {
+        String tx = "010000000268b24b5bfbaca07b471b967bdc737a1bf85670c72e5cc2db2fe3cbdae1da900c01000000c9524104f38a0124afe10f06cad3d4cbf9159f63443a63d4219d9316a411901348b4ccff517a812ba2578ef97bf8d0cd1a18d5f1de0a697529186c26e51ffb895a1c9e51410498ef09c13a496507999e6b08cbebc059f4751c94929388108e421c93bf7520216eabdfca6216b579e48c7a830e09e7343a277e59236be72e920a5a9bd021d2ae410476c3b254aec505f7aefa5ba172d85f4df6a03bba905a89775dadee5a07e283f9035d13572f8a345b66052111b20c75a106750bcac946f3c24a3355ba9e65e94453aeffffffffdefa8d2c540fc2f0de38ba3833da5ba3970b7ed815afeccff1dd2efeeb41ca5100000000c9524104f38a0124afe10f06cad3d4cbf9159f63443a63d4219d9316a411901348b4ccff517a812ba2578ef97bf8d0cd1a18d5f1de0a697529186c26e51ffb895a1c9e51410498ef09c13a496507999e6b08cbebc059f4751c94929388108e421c93bf7520216eabdfca6216b579e48c7a830e09e7343a277e59236be72e920a5a9bd021d2ae410476c3b254aec505f7aefa5ba172d85f4df6a03bba905a89775dadee5a07e283f9035d13572f8a345b66052111b20c75a106750bcac946f3c24a3355ba9e65e94453aeffffffff02c0d40100000000001976a9141f2fbe5334b1d291a0e0e03cdb3546516742dd5588ac580a00000000000017a9140dd0db5bc8c7158da03c65c34e39e3b54f0f89cf8700000000";
+
+        String sigList = "[{\"04f38a0124afe10f06cad3d4cbf9159f63443a63d4219d9316a411901348b4ccff517a812ba2578ef97bf8d0cd1a18d5f1de0a697529186c26e51ffb895a1c9e51\":{\"hash\":\"0ec3270b78f1ba0118d198288cc2d26f003922ff2e38e0594386f2c1b2e8f787\"},\"0498ef09c13a496507999e6b08cbebc059f4751c94929388108e421c93bf7520216eabdfca6216b579e48c7a830e09e7343a277e59236be72e920a5a9bd021d2ae\":{\"hash\":\"0ec3270b78f1ba0118d198288cc2d26f003922ff2e38e0594386f2c1b2e8f787\"},\"0476c3b254aec505f7aefa5ba172d85f4df6a03bba905a89775dadee5a07e283f9035d13572f8a345b66052111b20c75a106750bcac946f3c24a3355ba9e65e944\":{\"hash\":\"0ec3270b78f1ba0118d198288cc2d26f003922ff2e38e0594386f2c1b2e8f787\"}},{\"04f38a0124afe10f06cad3d4cbf9159f63443a63d4219d9316a411901348b4ccff517a812ba2578ef97bf8d0cd1a18d5f1de0a697529186c26e51ffb895a1c9e51\":{\"hash\":\"985f495b1e9b9670bc77d25a2f7a47eb4d7dae3f4d2aa4637294791eda05d98d\"},\"0498ef09c13a496507999e6b08cbebc059f4751c94929388108e421c93bf7520216eabdfca6216b579e48c7a830e09e7343a277e59236be72e920a5a9bd021d2ae\":{\"hash\":\"985f495b1e9b9670bc77d25a2f7a47eb4d7dae3f4d2aa4637294791eda05d98d\"},\"0476c3b254aec505f7aefa5ba172d85f4df6a03bba905a89775dadee5a07e283f9035d13572f8a345b66052111b20c75a106750bcac946f3c24a3355ba9e65e944\":{\"hash\":\"985f495b1e9b9670bc77d25a2f7a47eb4d7dae3f4d2aa4637294791eda05d98d\"}}]";
+
+
+        String privkeya = "5KAovUBbq3uBUQBPPr6RABJVnh4fy6E49dbQjqhwE8HEoCDTA19";
+        ECKey key1 = new DumpedPrivateKey(MainNetParams.get(), privkeya).getKey();
+
+        assertEquals(key1.toAddress(MainNetParams.get()).toString(), "1MWr2FY4XLfEzZ7PQPELNwFkog83vwh6a1");
+
+        String privkeyb = "5JefEur75YYjxHJjmJDaTRAL8hY8GWvLxTwHn11HZQWwcySKfrn";
+        ECKey key2 = new DumpedPrivateKey(MainNetParams.get(), privkeyb).getKey();
+
+        assertEquals(key2.toAddress(MainNetParams.get()).toString(), "1CZn88sLyLNe6zwJsPLYkj9DTsHXVWi3TU");
+
+        Transaction cwTX = new Transaction(MainNetParams.get(), Hex.decode(tx));
+        sigList = MultiSigUtils.signSignatureList(sigList, cwTX, key1);
+        sigList = MultiSigUtils.signSignatureList(sigList, cwTX, key2);
     }
 
     @Override
@@ -147,6 +175,7 @@ public class MultiSigUtilsTest extends InstrumentationTestCase {
     private static String sigListJson =  "[{\"02fd89e243d38f4e24237eaac4cd3a6873ce45aa4036ec0c7b79a4d4ac0fefebc4\":{\"hash\":\"fddf486c62c0c89eb9d8bd054e6bffb504fdf70239e315074676d9f65c49bd1b\"},\"0396e42d3c584da0300ee44dcbaee0eccaa0e6ae2264fdd2554af6d2953f95bf99\":{\"hash\":\"fddf486c62c0c89eb9d8bd054e6bffb504fdf70239e315074676d9f65c49bd1b\",\"sig\":\"304502200a2bff6a4da53e3376c36d943dc9d43addc18b667f5892411e55ccaea8b3b779022100f4f2a1c121e75cd80137b2c38fdf90f4da634ab6c159005d530eb9cfe3e93f60\"}},{\"02fd89e243d38f4e24237eaac4cd3a6873ce45aa4036ec0c7b79a4d4ac0fefebc4\":{\"hash\":\"2fb8960eecf2fe2a9268953cb564e27b669e570fc39c7b100f9706e6339ffdf5\"},\"034000cea8f9cbaf88095d3ef539ee438e3cefea9ed9585e2e182b45496f071a83\":{\"hash\":\"2fb8960eecf2fe2a9268953cb564e27b669e570fc39c7b100f9706e6339ffdf5\",\"sig\":\"3044022079dda685df2d0294d076b52b42fc298d2dc7a1300b93bec3216470bdc2619af2022028f2c97aa412933d515e82596b45b57c33463be63812cb60acad981f9505a021\"}}]";
 
     private static String sigListTX = "01000000029fd77c01b4f81f142e7e066eb9abeb4952ec5fdea51036acbb22b5ffeb57fd5f0100000047522102fd89e243d38f4e24237eaac4cd3a6873ce45aa4036ec0c7b79a4d4ac0fefebc4210396e42d3c584da0300ee44dcbaee0eccaa0e6ae2264fdd2554af6d2953f95bf9952aeffffffffc0161c6d62ac75f36bf95fcb2a8222f2274e86c2dcaec3434a0b6b6e0a6b60800000000047522102fd89e243d38f4e24237eaac4cd3a6873ce45aa4036ec0c7b79a4d4ac0fefebc421034000cea8f9cbaf88095d3ef539ee438e3cefea9ed9585e2e182b45496f071a8352aeffffffff0156050000000000001976a91404d075b3f501deeef5565143282b6cfe8fad5e9488ac00000000";
+
     private Transaction multiTX = null;
     private DeterministicKey dk;
     private byte[] redemptionScript;

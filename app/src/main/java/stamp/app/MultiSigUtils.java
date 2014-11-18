@@ -11,7 +11,6 @@ import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.Lists;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +22,12 @@ public class MultiSigUtils {
      * Sign where we can
      * Rebuild list and send it back
      */
-    public static String signSignatureList(String signaturesJson, Transaction tx, DeterministicKey key)
+    public static String signSignatureList(String signaturesJson, Transaction tx, ECKey key)
         throws Exception {
 
         JSONArray sigList = new JSONArray(signaturesJson);
 
-        String pubKeyHex = bytesToHex(key.getPubKeyBytes());
+        String pubKeyHex = bytesToHex(key.getPubKey());
 
         for(int i = 0; i < sigList.length(); i++) {
 
@@ -36,18 +35,25 @@ public class MultiSigUtils {
 
             JSONArray publicKeys = keys.names();
 
+            TransactionInput txIn = tx.getInput(i);
+
+            List<ScriptChunk> chunks = txIn.getScriptSig().getChunks();
+
+            Script redeemScript = (chunks.get(chunks.size() - 1).equalsOpCode(174)) ?
+                    txIn.getScriptSig() : new Script(chunks.get(chunks.size() - 1).data);
+
             for(int x = 0; x < publicKeys.length(); x++) {
 
                 String publicKey = publicKeys.getString(x);
 
                 JSONObject hashAndSig = keys.getJSONObject(publicKey);
 
-                String hash = hashAndSig.getString("hash");
+                String jsonHash = hashAndSig.getString("hash");
 
                 if(pubKeyHex.toLowerCase().equals(publicKey.toLowerCase())) {
 
-                    byte[] sig = key.toECKey().sign(Sha256Hash.create(Hex.decode(hash))).encodeToDER();
-                    hashAndSig.put("sig", bytesToHex(sig));
+                    ECKey.ECDSASignature sig = key.sign(new Sha256Hash(jsonHash));
+                    hashAndSig.put("sig", bytesToHex(sig.encodeToDER()));
                 }
             }
         }
