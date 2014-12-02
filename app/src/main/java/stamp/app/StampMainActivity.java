@@ -19,8 +19,8 @@ import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.bitcoin.crypto.MnemonicCode;
 import com.google.bitcoin.params.MainNetParams;
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 import org.apache.http.Header;
 import org.spongycastle.util.encoders.Hex;
 
@@ -219,9 +219,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
         Log.w("INFO", rp.toString());
 
-        client.get(post_back, rp, new AsyncHttpResponseHandler() {
+        client.get(post_back, rp, new TextHttpResponseHandler() {
             @Override
-            public void onSuccess(String response) {
+            public void onSuccess(int statusCode, Header[] headers, String response) {
 
                 Log.w("INFO", response);
 
@@ -252,6 +252,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                         if(metaData.startsWith("[")) {
                             // Yes, use the new JSON format.
                             DeterministicKey ekprv = getHDWalletDeterministicKey(index);
+                            String priv = ekprv.serializePrivB58();
                             metaData = MultiSigUtils.signSignatureList(metaData, tx, ekprv.toECKey());
                             rp.put("meta_data", metaData);
                         }
@@ -265,9 +266,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                     // POST it back.
 
-                    client.post(post_back, rp, new AsyncHttpResponseHandler() {
+                    client.post(post_back, rp, new TextHttpResponseHandler() {
                         @Override
-                        public void onSuccess(String response) {
+                        public void onSuccess(int statusCode, Header[] headers, String response) {
 
                             Toast toast = Toast.makeText(getApplicationContext(),
                                     response, Toast.LENGTH_SHORT);
@@ -278,7 +279,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                         }
                         @Override
                         public void onFailure(int statusCode, Header[] headers,
-                                              byte[] responseBody, Throwable error) {
+                                              String responseBody, Throwable error) {
 
                             Toast toast = Toast.makeText(getApplicationContext(),
                                     "" + statusCode, Toast.LENGTH_SHORT);
@@ -304,7 +305,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
             @Override
             public void onFailure(int statusCode, Header[] headers,
-                                  byte[] responseBody, Throwable error) {
+                                  String responseBody, Throwable error) {
 
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
@@ -348,9 +349,9 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
         Log.w("INFO", rp.toString());
 
-        client.post(post_back, rp, new AsyncHttpResponseHandler() {
+        client.post(post_back, rp, new TextHttpResponseHandler() {
             @Override
-            public void onSuccess(String response) {
+            public void onSuccess(int statusCode, Header[] headers, String response) {
 
                 Toast toast = Toast.makeText(getApplicationContext(),
                         response, Toast.LENGTH_SHORT);
@@ -358,7 +359,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
             }
             @Override
             public void onFailure(int statusCode, Header[] headers,
-                                  byte[] responseBody, Throwable error) {
+                                  String responseBody, Throwable error) {
 
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
@@ -387,9 +388,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
         Log.w("INFO", rp.toString());
 
-        client.post(post_back, rp, new AsyncHttpResponseHandler() {
+        client.post(post_back, rp, new TextHttpResponseHandler() {
             @Override
-            public void onSuccess(String response) {
+            public void onSuccess(int statusCode, Header[] headers,
+                                  String response) {
 
                 Toast toast = Toast.makeText(getApplicationContext(),
                         response, Toast.LENGTH_SHORT);
@@ -398,12 +400,12 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
             }
             @Override
             public void onFailure(int statusCode, Header[] headers,
-                                  byte[] responseBody, Throwable error) {
+                                  String responseBody, Throwable error) {
 
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
                 toast.show();
-                Log.w("ERROR", "" + MultiSigUtils.bytesToHex(responseBody));
+                Log.w("ERROR", "" + responseBody);
 
                 Log.w("INFO", "FAILURE " + statusCode);
             }

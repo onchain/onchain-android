@@ -3,16 +3,13 @@ package stamp.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.util.Log;
 import android.widget.Toast;
-
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.params.MainNetParams;
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-
+import com.loopj.android.http.TextHttpResponseHandler;
 import org.apache.http.Header;
 
 import java.net.URI;
@@ -87,9 +84,9 @@ public class BitIDCommands {
                 "Sig " + signed, Toast.LENGTH_SHORT);
         toast.show();
 
-        client.post(post_back, rp, new AsyncHttpResponseHandler() {
+        client.post(post_back, rp, new TextHttpResponseHandler() {
             @Override
-            public void onSuccess(String response) {
+            public void onSuccess(int statusCode, Header[] headers, String response) {
 
                 Toast toast = Toast.makeText(activity.getApplicationContext(),
                         response, Toast.LENGTH_SHORT);
@@ -97,7 +94,7 @@ public class BitIDCommands {
             }
             @Override
             public void onFailure(int statusCode, Header[] headers,
-                                  byte[] responseBody, Throwable error) {
+                                  String responseBody, Throwable error) {
 
                 Toast toast = Toast.makeText(activity.getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
