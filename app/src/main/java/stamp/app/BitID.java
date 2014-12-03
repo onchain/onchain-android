@@ -1,12 +1,12 @@
 package stamp.app;
 
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 
 
 /**
@@ -14,7 +14,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class BitID
 {
-
     public static final boolean checkBitidUriValidity(URI uri)
     {
         if (!"bitid".equals(uri.getScheme()))

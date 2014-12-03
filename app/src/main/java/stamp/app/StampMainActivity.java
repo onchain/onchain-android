@@ -12,8 +12,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.DumpedPrivateKey;
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.bitcoin.crypto.MnemonicCode;
@@ -22,7 +22,6 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 import org.apache.http.Header;
-import org.spongycastle.util.encoders.Hex;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -34,6 +33,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
     Button scanButton;
 
     static final int SCAN_QR_CODE = 1;
+    private static final String TAG = "StampActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +77,7 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
     private void setWalletSeed(String seed) {
         SharedPreferences.Editor e = getSharedPreferences("bip39", MODE_PRIVATE).edit();
-        e.putString("wallet-seed", seed.toString().trim());
+        e.putString("wallet-seed", seed.trim());
         e.commit();
     }
 
@@ -142,6 +142,10 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                     params = data.split(" ");
                     if(params.length == 24)
                         processNewWalletSeed(data);
+                    else if(data.startsWith("5")) {
+                        // Perhaps it's a WIF private key
+                        seedWalletWithWalletImportFormatPrivateKey(data);
+                    }
                     return;
                 }
 
@@ -156,16 +160,13 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
 
                 if(cmd.equals("mpk")) {
 
-                    processMPKRequest(params, post_back, crc);
+                    OnChainCommands.processMPKRequest(params, post_back, getHDWalletDeterministicKey(crc), this);
 
                 } else if(cmd.equals("sign")) {
 
                     // Sign a TX.
-                    processSignRequest(params, post_back, crc);
-                } else if(cmd.equals("sign")) {
+                    OnChainCommands.processSignRequest(params, post_back, getHDWalletDeterministicKey(crc), this);
 
-                    // Sign a TX.
-                    processSignRequest(params, post_back, crc);
                 } else if(cmd.equals("pubkey")) {
 
                     // Sign a TX.
@@ -179,6 +180,50 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                     e.toString(), Toast.LENGTH_SHORT);
             toast.show();
         }
+    }
+
+    private void seedWalletWithWalletImportFormatPrivateKey(final String data) {
+
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        try {
+                            ECKey wifKey = new DumpedPrivateKey(MainNetParams.get(), data).getKey();
+
+                            MnemonicCode mc = new MnemonicCode();
+                            List<String> mn = mc.toMnemonic(wifKey.getPrivKeyBytes());
+                            StringBuilder seed = new StringBuilder();
+                            for(String s : mn) {
+                                seed.append(s);
+                                seed.append(" ");
+                            }
+
+                            String walletSeed = seed.toString().trim();
+
+                            SharedPreferences.Editor e = getSharedPreferences("bip39", MODE_PRIVATE).edit();
+                            e.putString("wallet-seed", seed.toString().trim());
+                            e.commit();
+
+                        } catch (Exception e) {
+                            Log.e(TAG, e.toString());
+                        }
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(data).setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener)
+                .setTitle("Do you want to change generate a new wallet from this private key ?").show();
+
     }
 
     private void processNewWalletSeed(final String data) {
@@ -204,114 +249,6 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 .setNegativeButton("No", dialogClickListener)
                 .setTitle("Do you want to change your BIP39 seed ?").show();
 
-    }
-
-    private void processSignRequest(final String[] params, final String post_back, final int index)
-        throws Exception {
-
-        final AsyncHttpClient client = new AsyncHttpClient();
-        final RequestParams rp = new RequestParams();
-
-        for(int i = 3; (i + 1) < params.length; i+= 2) {
-            rp.put(params[i], params[i + 1]);
-        }
-
-
-        Log.w("INFO", rp.toString());
-
-        client.get(post_back, rp, new TextHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, String response) {
-
-                Log.w("INFO", response);
-
-                String transactionHex = response;
-                String metaData = null;
-                if(response.indexOf(":", 0) != -1) {
-                    transactionHex = response.split(":")[0];
-                    metaData = response.substring(response.indexOf(":", 0) + 1, response.length());
-                }
-                Transaction tx = new Transaction(MainNetParams.get(), Hex.decode(transactionHex));
-
-                if(tx.getOutputs().size() == 0) {
-
-                    String txShort = response.substring(0, 40);
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            "Invalid TX ? (" + txShort + ")", Toast.LENGTH_SHORT);
-                    toast.show();
-                    return;
-                }
-
-                try {
-
-                    if(metaData == null) {
-                        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-                        tx = MultiSigUtils.signMultiSig(tx, ekprv.toECKey());
-                    } else {
-                        // Is this a JSON payload.
-                        if(metaData.startsWith("[")) {
-                            // Yes, use the new JSON format.
-                            DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-                            String priv = ekprv.serializePrivB58();
-                            metaData = MultiSigUtils.signSignatureList(metaData, tx, ekprv.toECKey());
-                            rp.put("meta_data", metaData);
-                        }
-                        else {
-                            DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-                            tx = MultiSigUtils.signMultiSigFromPath(tx, ekprv, metaData);
-                        }
-                    }
-
-                    rp.put("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
-
-                    // POST it back.
-
-                    client.post(post_back, rp, new TextHttpResponseHandler() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String response) {
-
-                            Toast toast = Toast.makeText(getApplicationContext(),
-                                    response, Toast.LENGTH_SHORT);
-                            toast.show();
-
-
-                            Log.w("INFO", "SUCCESS " + response);
-                        }
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers,
-                                              String responseBody, Throwable error) {
-
-                            Toast toast = Toast.makeText(getApplicationContext(),
-                                    "" + statusCode, Toast.LENGTH_SHORT);
-                            toast.show();
-
-
-                            Log.w("INFO", "FAILURE " + statusCode);
-                        }
-                    });
-                } catch (Exception e) {
-                    Log.w("ERROR", e.getMessage());
-
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            e.getMessage(), Toast.LENGTH_SHORT);
-                    toast.show();
-                    return;
-                }
-
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        tx.getOutputs().get(0).toString(), Toast.LENGTH_SHORT);
-                toast.show();
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers,
-                                  String responseBody, Throwable error) {
-
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        "" + statusCode, Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        });
     }
 
     private DeterministicKey getHDWalletDeterministicKey(int index) throws Exception {
@@ -364,50 +301,6 @@ public class StampMainActivity extends ActionBarActivity implements View.OnClick
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "" + statusCode, Toast.LENGTH_SHORT);
                 toast.show();
-            }
-        });
-    }
-
-    private void processMPKRequest(String[] params, String post_back, int index) throws Exception {
-
-        DeterministicKey ekprv = getHDWalletDeterministicKey(index);
-
-        Toast toast = Toast.makeText(getApplicationContext(),
-                ekprv.serializePubB58(), Toast.LENGTH_SHORT);
-        toast.show();
-
-        AsyncHttpClient client = new AsyncHttpClient();
-        RequestParams rp = new RequestParams();
-        rp.put("mpk", ekprv.serializePubB58());
-
-
-        for(int i = 3; (i + 1) < params.length; i+= 2) {
-            rp.put(params[i], params[i + 1]);
-        }
-
-
-        Log.w("INFO", rp.toString());
-
-        client.post(post_back, rp, new TextHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers,
-                                  String response) {
-
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        response, Toast.LENGTH_SHORT);
-                toast.show();
-                Log.w("INFO", "SUCCESS " + response);
-            }
-            @Override
-            public void onFailure(int statusCode, Header[] headers,
-                                  String responseBody, Throwable error) {
-
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        "" + statusCode, Toast.LENGTH_SHORT);
-                toast.show();
-                Log.w("ERROR", "" + responseBody);
-
-                Log.w("INFO", "FAILURE " + statusCode);
             }
         });
     }

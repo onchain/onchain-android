@@ -3,26 +3,26 @@ package stamp.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.util.Log;
 import android.widget.Toast;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.params.MainNetParams;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
-import org.apache.http.Header;
+import com.squareup.okhttp.*;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class BitIDCommands {
 
-    public static final String BITID_PARAM_ADDRESS = "address";
-    public static final String BITID_PARAM_SIGNATURE = "signature";
-    public static final String BITID_PARAM_URI = "uri";
+    public static final String BIT_ID_PARAM_ADDRESS = "address";
+    public static final String BIT_ID_PARAM_SIGNATURE = "signature";
+    public static final String BIT_ID_PARAM_URI = "uri";
+    private static final String TAG = "BitIDCommands";
     public static final NetworkParameters NETWORK_PARAMETERS = MainNetParams.get();
 
     /**
-     * Take the data from the QR Code and fiollow the BITID spec.
+     * Take the data from the QR Code and follow the BIT ID spec.
      * https://github.com/bitid/bitid/blob/master/BIP_draft.md
      */
     public static void execute(final String data,
@@ -33,8 +33,6 @@ public class BitIDCommands {
             return;
 
         final URI callback = BitID.buildCallbackUriFromBitidUri(new URI(data));
-        String[] params = data.split(":");
-
 
         final String signed = key.toECKey().signMessage(data);
 
@@ -69,36 +67,43 @@ public class BitIDCommands {
     }
 
 
-    private static void doBitIDCallback(String signed, String post_back, String address,
+    private static void doBitIDCallback(String signed, String postBack, String address,
                                         String data,
                                         final Activity activity) {
 
-        AsyncHttpClient client = new AsyncHttpClient();
-        RequestParams rp = new RequestParams();
+        OkHttpClient client = new OkHttpClient();
 
-        rp.put(BITID_PARAM_ADDRESS, address);
-        rp.put(BITID_PARAM_SIGNATURE, signed);
-        rp.put(BITID_PARAM_URI, data);
+        RequestBody formBody = new FormEncodingBuilder()
+                .add(BIT_ID_PARAM_ADDRESS, address)
+                .add(BIT_ID_PARAM_SIGNATURE, signed)
+                .add(BIT_ID_PARAM_URI, data)
+                .build();
 
-        Toast toast = Toast.makeText(activity.getApplicationContext(),
-                "Sig " + signed, Toast.LENGTH_SHORT);
-        toast.show();
+        Request request = new Request.Builder().url(postBack)
+                .post(formBody)
+                .build();
 
-        client.post(post_back, rp, new TextHttpResponseHandler() {
+        client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String response) {
-
-                Toast toast = Toast.makeText(activity.getApplicationContext(),
-                        response, Toast.LENGTH_SHORT);
-                toast.show();
+            public void onFailure(Request request, IOException throwable) {
+                Log.e(TAG, throwable.toString());
             }
-            @Override
-            public void onFailure(int statusCode, Header[] headers,
-                                  String responseBody, Throwable error) {
 
-                Toast toast = Toast.makeText(activity.getApplicationContext(),
-                        "" + statusCode, Toast.LENGTH_SHORT);
-                toast.show();
+            @Override
+            public void onResponse(final Response response) throws IOException {
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        try {
+                            Toast toast = Toast.makeText(activity.getApplicationContext(),
+                                    response.body().string(), Toast.LENGTH_SHORT);
+                            toast.show();
+                        } catch (Exception e) {
+                            Log.e(TAG, e.toString());
+                        }
+                    }
+                });
             }
         });
     }
