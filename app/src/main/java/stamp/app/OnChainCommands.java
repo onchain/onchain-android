@@ -20,15 +20,17 @@ public class OnChainCommands {
                                           final DeterministicKey ekPrivate, final Activity activity)
             throws Exception {
 
-        FormEncodingBuilder feb = new FormEncodingBuilder();
+        final FormEncodingBuilder feb = new FormEncodingBuilder();
 
+        String paramString = "/?";
         for(int i = 3; (i + 1) < params.length; i+= 2) {
             feb.add(params[i], params[i + 1]);
+            paramString += params[i] + "=" + params[i+1] + "&";
         }
         RequestBody formBody = feb.build();
 
-        Request request = new Request.Builder().url(postBack)
-                .post(formBody)
+        Request request = new Request.Builder().url(postBack + paramString)
+                .get()
                 .build();
 
         Log.v(TAG, request.toString());
@@ -47,11 +49,11 @@ public class OnChainCommands {
             public void onResponse(final Response response) throws IOException {
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-                String res = response.toString();
+                String res = response.body().string();
                 Log.w("INFO", res);
 
                 // Strip out any meta data.
-                String transactionHex = response.toString();
+                String transactionHex = res;
                 String metaData = null;
                 if(res.indexOf(":", 0) != -1) {
                     transactionHex = res.split(":")[0];
@@ -68,7 +70,6 @@ public class OnChainCommands {
 
                 try {
 
-                    FormEncodingBuilder callBackParams = new FormEncodingBuilder();
                     if(metaData == null) {
                         tx = MultiSigUtils.signMultiSig(tx, ekPrivate.toECKey());
                     } else {
@@ -76,16 +77,16 @@ public class OnChainCommands {
                         if(metaData.startsWith("[")) {
                             // Yes, use the new JSON format.
                             metaData = MultiSigUtils.signSignatureList(metaData, tx, ekPrivate.toECKey());
-                            callBackParams.add("meta_data", metaData);
+                            feb.add("meta_data", metaData);
                         }
                         else {
                             tx = MultiSigUtils.signMultiSigFromPath(tx, ekPrivate, metaData);
                         }
                     }
 
-                    callBackParams.add("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
+                    feb.add("tx", Utils.bytesToHexString(tx.bitcoinSerialize()));
 
-                    RequestBody formBody = callBackParams.build();
+                    RequestBody formBody = feb.build();
 
                     Request callBackRequest = new Request.Builder().url(postBack)
                             .post(formBody)
