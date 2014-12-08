@@ -69,8 +69,8 @@ public class MultiSigUtils {
 
         ArrayList<ECKey> keys = new ArrayList<ECKey>();
 
-        DeterministicKey key = privateKey;
         for(String p : paths) {
+            DeterministicKey key = privateKey;
             String[] indexes = p.split("/");
             for(String i : indexes) {
                 if(i.matches("-?\\d+(\\.\\d+)?")) {
